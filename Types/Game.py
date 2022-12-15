@@ -1,6 +1,7 @@
 from __future__ import annotations
 from Board import Board
 from Player import Player
+from ChessPieceGenerator import ChessPieceGenerator
 
 
 class Game:
@@ -19,6 +20,10 @@ class Game:
         self.board: Board = board
         self.player_1: Player = player_1
         self.player_2: Player = player_2
+        team_1_generator = ChessPieceGenerator(self.player_1.team)
+        team_2_generator = ChessPieceGenerator(self.player_2.team)
+        self.player_1.pieces = team_1_generator.generate_initial_pieces()
+        self.player_2.pieces = team_2_generator.generate_initial_pieces()
 
     def end_game(self: Game) -> None:
         """
