@@ -18,8 +18,8 @@ class Bishop(ChessPiece):
         :param team: The team the piece belongs to
         """
         super().__init__(x, y,
-                         [MoveSet(0, 0, InfiniteDirection(True, True, True))],
-                         [MoveSet(0, 0, InfiniteDirection(True, True, True))],
+                         [MoveSet(0, 0, InfiniteDirection(False, False, True))],
+                         [MoveSet(0, 0, InfiniteDirection(False, False, True))],
                          team)
         self.name = "Bishop"
 
