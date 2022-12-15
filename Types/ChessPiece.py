@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional
 from MoveSet import MoveSet
+from Player import Team
 
 
 @dataclass
@@ -17,3 +18,4 @@ class ChessPiece:
     y: int  # the y coordinate of the piece
     move_set: List[MoveSet]  # the move set of the piece
     capture_moves: Optional[List[MoveSet]]  # the moves used to capture pieces (Pawns, for example)
+    team: Team
