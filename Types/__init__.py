@@ -6,3 +6,5 @@ from MoveSet import *
 from Pawn import Pawn
 from Queen import Queen
 from Rook import Rook
+from Board import Board
+from Player import Player
