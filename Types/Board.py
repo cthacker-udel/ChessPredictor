@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ChessPiece import ChessPiece
 
-from Player import Player
+from Player import Player, Team
 
 
 class Board:
@@ -80,6 +80,16 @@ class Board:
         self.board = [[] * self.height]
         return self
 
+    def grab_piece(self, x: int, y: int) -> ChessPiece | None:
+        """
+        Accesses and returns the piece at indexes x and y.
+
+        :param x: The column where the piece is located
+        :param y: The row where the piece is located
+        :return: The ChessPiece or None if no piece exists there
+        """
+        return self.board[y][x]
+
     def does_piece_exist(self: Board, x: int, y: int) -> bool:
         """
         Checks if a piece is existent on that space, the space being the x and y coordinates supplied
@@ -90,27 +100,34 @@ class Board:
         """
         return self.board[y][x] is not None
 
-    def validate_move(self: Board, to_x: int, to_y: int) -> bool:
+    def validate_move(self: Board, to_x: int, to_y: int, moving_team: Team) -> bool:
         """
         Validates the move being requested, and returns a boolean indicating if the move is valid
 
+        :param moving_team: The team that is requesting the move
         :param to_x: The column where the piece is being moved to
         :param to_y: The row where the piece is being moved to
         :return: Whether the piece can be moved to that coordinate
         """
-        if self.does_piece_exist(to_x, to_y):
+        to_piece = self.grab_piece(to_x, to_y)
+        if to_piece is not None and to_piece.team == moving_team:  # Piece exists at coordinate and team is movers
             return False
+        elif (to_x >= self.width or to_x < 0) or (to_y >= self.height or to_y < 0):  # Moving out of bounds
+            return False
+        return True
 
-    def move_piece(self: Board, from_x: int, from_y: int, to_x: int, to_y: int) -> Board:
+    def move_piece(self: Board, from_x: int, from_y: int, to_x: int, to_y: int, moving_team: Team) -> Board:
         """
         Moves a piece on the chess board, directly mutating the instance and returning it
 
+        :param moving_team: The team that is requesting the move
         :param from_x: The column where the piece currently is
         :param from_y: The row where the piece currently is
         :param to_x: The column where the piece is moving to
         :param to_y: The row where the piece is moving to
         :return: The modified Board
         """
-        removed_piece = self.remove_piece(from_x, from_y)
-        self.place_piece(removed_piece, to_x, to_y)
+        if self.validate_move(to_x, to_y, moving_team):
+            removed_piece = self.remove_piece(from_x, from_y)
+            self.place_piece(removed_piece, to_x, to_y)
         return self
