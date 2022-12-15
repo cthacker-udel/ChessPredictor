@@ -12,7 +12,7 @@ class Board:
     The board class, which houses the actual board itself, and all methods relating to the board.
     """
 
-    def __init__(self: Board, width: int, height: int) -> None:
+    def __init__(self: Board, width: int = 8, height: int = 8) -> None:
         """
         Initializes the board instance, takes in a width and height argument to set the board dimensions
 
