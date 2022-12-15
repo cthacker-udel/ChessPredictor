@@ -18,3 +18,4 @@ class Pawn(ChessPiece):
         :param team: The team the piece belongs to
         """
         super().__init__(x, y, [MoveSet(0, 1), MoveSet(0, 2)], [MoveSet(1, 1), MoveSet(-1, -1)], team)
+        self.name = "Pawn"

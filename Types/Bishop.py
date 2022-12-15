@@ -21,4 +21,5 @@ class Bishop(ChessPiece):
                          [MoveSet(0, 0, InfiniteDirection(True, True, True))],
                          [MoveSet(0, 0, InfiniteDirection(True, True, True))],
                          team)
+        self.name = "Bishop"
 

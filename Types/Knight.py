@@ -36,3 +36,4 @@ class Knight(ChessPiece):
             MoveSet(1, -2),
             MoveSet(-1, -2)
         ], team)
+        self.name = "Knight"

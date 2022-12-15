@@ -36,3 +36,4 @@ class King(ChessPiece):
             MoveSet(-1, 0),
             MoveSet(-1, 1)
         ], team)
+        self.name = "King"
