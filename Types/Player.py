@@ -18,5 +18,6 @@ class Player:
     The Player class, which represents a player of one of the two teams in chess
     """
     team: Team  # The team the player belongs to, either white or black
+    captured_pieces: List[ChessPiece]  # The chess pieces the user has captured
     pieces: List[ChessPiece]  # The ChessPieces the player owns
     name: Optional[str]  # The name of the player (customization option)

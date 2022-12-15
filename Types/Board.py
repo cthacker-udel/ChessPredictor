@@ -116,6 +116,33 @@ class Board:
             return False
         return True
 
+    def is_capture(self: Board, to_x: int, to_y: int, moving_team: Team) -> bool:
+        """
+        Determines if the move is a capturing move, meaning that the player takes the opponent's piece at that spot
+        and replaces that spot with the piece they are moving.
+
+        :param to_x: The column where the user is requesting the move
+        :param to_y: The row where the user is requesting the move
+        :param moving_team: The team of the player that is moving the piece
+        :return: Whether it is a capture move
+        """
+        moving_to_piece = self.grab_piece(to_x, to_y)
+        return moving_to_piece is not None and moving_to_piece.team != moving_team
+
+    def capture_piece(self: Board, to_x: int, to_y: int, moving_team: Team) -> ChessPiece:
+        """
+        Captures the piece at the coordinates `to_x` and `to_y`.
+
+        :param to_x: The column where the user is requesting the move
+        :param to_y: The row where the user is requesting the move
+        :param moving_team: The team that is requesting the move
+        :return: The capture piece
+        """
+        captured_piece = self.remove_piece(to_x, to_y)
+        moving_player = self.player_one if self.player_two.team == moving_team else self.player_two
+        moving_player.captured_pieces.append(captured_piece)
+        return captured_piece
+
     def move_piece(self: Board, from_x: int, from_y: int, to_x: int, to_y: int, moving_team: Team) -> Board:
         """
         Moves a piece on the chess board, directly mutating the instance and returning it
@@ -128,6 +155,8 @@ class Board:
         :return: The modified Board
         """
         if self.validate_move(to_x, to_y, moving_team):
+            if self.is_capture(to_x, to_y, moving_team):
+                self.capture_piece(to_x, to_y, moving_team)
             removed_piece = self.remove_piece(from_x, from_y)
             self.place_piece(removed_piece, to_x, to_y)
         return self
