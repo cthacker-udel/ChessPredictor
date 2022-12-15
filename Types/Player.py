@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from __future__ import annotations
 from enum import Enum
 from ChessPiece import ChessPiece
 from typing import List, Optional
@@ -12,12 +12,23 @@ class Team(Enum):
     BLACK = 1  # The Black Team
 
 
-@dataclass
 class Player:
     """
     The Player class, which represents a player of one of the two teams in chess
     """
-    team: Team  # The team the player belongs to, either white or black
-    captured_pieces: List[ChessPiece]  # The chess pieces the user has captured
-    pieces: List[ChessPiece]  # The ChessPieces the player owns
-    name: Optional[str]  # The name of the player (customization option)
+
+    def __init__(self: Player) -> None:
+        """
+        Initializes a player instance, with all fields defaulted
+        """
+        self.team: Team | None = None
+        self.captured_pieces: List[ChessPiece] = []
+        self.pieces: List[ChessPiece] = []
+        self.name: Optional[str] = ''
+
+    def clear_pieces(self: Player) -> None:
+        """
+        Clears the player's owned pieces and captured pieces
+        """
+        self.pieces = []
+        self.captured_pieces = []
