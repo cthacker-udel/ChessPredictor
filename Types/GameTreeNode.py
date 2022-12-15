@@ -15,6 +15,8 @@ class GameTreeNode:
 
         :param value: A snapshot of the current game instance
         """
+        self.numerator = 0
+        self.denominator = 1
         self.value = value
         self.children: List[GameTreeNode] = []
         self.parent: GameTreeNode | None = None
