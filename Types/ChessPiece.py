@@ -29,6 +29,7 @@ class ChessPiece:
         self.move_set = move_set
         self.capture_moves = capture_moves
         self.team = team
+        self.name = ''
 
     def set_team(self: ChessPiece, team: Team) -> ChessPiece:
         """
