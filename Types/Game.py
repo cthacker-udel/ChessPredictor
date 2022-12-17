@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import random
+from copy import deepcopy
 from typing import List, TYPE_CHECKING
 from Types.ChessPieceGenerator import ChessPieceGenerator
 from Types.Helpers import flip_coin, CoinFace
-from Types.Player import Team
+from Types.Player import Team, Player
 from Types.GameTree import GameTree
 from Types.GameTreeNode import GameTreeNode
 
@@ -28,7 +29,7 @@ class Game:
         :param player_1: The Player instance, player 1
         :param player_2: The Player instance, player 2
         """
-        self.board: Board = board
+        self.board: Board = deepcopy(board)
         self.board.player_one = player_1
         self.board.player_two = player_2
 
@@ -99,7 +100,6 @@ class Game:
             random_move_choice = random.choice(all_valid_potential_moves)
             self.simulate_move(random_move_choice[0], random_move_choice[1], random_move_choice[2],
                                random_move_choice[3], current_player.team)
-            self.next_turn()
         return current_player.team
 
     def is_in_kings_space(self: Game, king: King, piece: ChessPiece) -> List[bool, List[int]]:
@@ -110,10 +110,10 @@ class Game:
         :param piece: The piece to move
         :return: Whether the piece passed in occupies any of the king's potential moving spaces
         """
-        is_left = piece.x == king.x - 1
-        is_right = piece.x == king.x + 1
-        is_top = piece.y == king.y - 1
-        is_bottom = piece.y == king.y + 1
+        is_left = piece.x == king.x - 1 and piece.y == king.y
+        is_right = piece.x == king.x + 1 and piece.y == king.y
+        is_top = piece.y == king.y - 1 and piece.x == king.x
+        is_bottom = piece.y == king.y + 1 and piece.x == king.x
         is_top_left = piece.x == king.x - 1 and piece.y == king.y - 1
         is_top_right = piece.x == king.x + 1 and piece.y == king.y - 1
         is_bottom_left = piece.x == king.x - 1 and piece.y == king.y + 1
@@ -142,6 +142,15 @@ class Game:
         :return: Whether the opposing player is in checkmate
         """
 
+        def valid_coord(coord: List[int]) -> bool:
+            """
+            Validates a coordinate passed into it, in the format [x, y]
+
+            :param coord: The coordinate being passed in
+            :return: Whether the coordinate is valid
+            """
+            return coord[1] < 8 and coord[1] >= 0 and coord[0] < 8 and coord[0] >= 0
+
         # Assign N the # of pieces the current_player has, and M the # of the pieces the opposing_player has,
         # the runtime analyses provided below reference those variables
 
@@ -167,6 +176,7 @@ class Game:
                     row.append(None)
             mock_board.append(row)
         # check if any pieces surround the king, then mark that as X
+        self.board.print_board()
         for each_piece in opposing_player.pieces:  # O(m)
             if found_king is not None:
                 is_in_king_space: List[bool, List[int]] = self.is_in_kings_space(found_king, each_piece)
@@ -196,41 +206,41 @@ class Game:
             bottom_left_coord = [found_king.x - 1, found_king.y + 1]
             bottom_right_coord = [found_king.x + 1, found_king.y + 1]
 
-            if found_king.x > 0:
+            if found_king.x > 0 and valid_coord(left_coord):
                 left = mock_board[left_coord[1]][left_coord[0]] in ['XO']
-            if found_king.x < self.board.width:
+            if found_king.x < self.board.width and valid_coord(right_coord):
                 right = mock_board[right_coord[1]][right_coord[0]] in ['XO']
-            if found_king.y > 0:
+            if found_king.y > 0 and valid_coord(top_coord):
                 top = mock_board[top_coord[1]][top_coord[0]] in ['XO']
-            if found_king.y < self.board.height:
+            if found_king.y < self.board.height and valid_coord(bottom_coord):
                 bottom = mock_board[bottom_coord[1]][bottom_coord[0]] in ['XO']
-            if found_king.y > 0 and found_king.x > 0:
+            if found_king.y > 0 and found_king.x > 0 and valid_coord(top_left_coord):
                 top_left = mock_board[top_left_coord[1]][top_left_coord[0]] in ['XO']
-            if found_king.y < self.board.height and found_king.x < self.board.width:
+            if found_king.y < self.board.height and found_king.x < self.board.width and valid_coord(top_right_coord):
                 top_right = mock_board[top_right_coord[1]][top_right_coord[0]] in ['XO']
-            if found_king.y < self.board.height and found_king.x > 0:
+            if found_king.y < self.board.height and found_king.x > 0 and valid_coord(bottom_left_coord):
                 bottom_left = mock_board[bottom_left_coord[1]][bottom_left_coord[0]]
-            if found_king.y < self.board.height and found_king.x < self.board.width:
+            if found_king.y < self.board.height and found_king.x < self.board.width and valid_coord(bottom_right_coord):
                 bottom_right = mock_board[bottom_right_coord[1]][bottom_right_coord[0]] in ['XO']
 
             if left and right and top and bottom and top_left and top_right and bottom_left and bottom_right:
                 return True
             #  clear all X's surrounding king
-            if mock_board[left_coord[1]][left_coord[0]] == 'X':
+            if valid_coord(left_coord) and mock_board[left_coord[1]][left_coord[0]] == 'X':
                 mock_board[left_coord[1]][left_coord[0]] = None
-            if mock_board[right_coord[1]][right_coord[0]] == 'X':
+            if valid_coord(right_coord) and mock_board[right_coord[1]][right_coord[0]] == 'X':
                 mock_board[right_coord[1]][right_coord[0]] = None
-            if mock_board[top_coord[1]][top_coord[0]] == 'X':
+            if valid_coord(top_coord) and mock_board[top_coord[1]][top_coord[0]] == 'X':
                 mock_board[top_coord[1]][top_coord[0]] = None
-            if mock_board[bottom_coord[1]][bottom_coord[0]] == 'X':
+            if valid_coord(bottom_coord) and mock_board[bottom_coord[1]][bottom_coord[0]] == 'X':
                 mock_board[bottom_coord[1]][bottom_coord[0]] = None
-            if mock_board[top_left_coord[1]][top_left_coord[0]] == 'X':
+            if valid_coord(top_left_coord) and mock_board[top_left_coord[1]][top_left_coord[0]] == 'X':
                 mock_board[top_left_coord[1]][top_left_coord[0]] = None
-            if mock_board[top_right_coord[1]][top_right_coord[0]] == 'X':
+            if valid_coord(top_right_coord) and mock_board[top_right_coord[1]][top_right_coord[0]] == 'X':
                 mock_board[top_right_coord[1]][top_right_coord[0]] = None
-            if mock_board[bottom_left_coord[1]][bottom_left_coord[0]] == 'X':
+            if valid_coord(bottom_left_coord) and mock_board[bottom_left_coord[1]][bottom_left_coord[0]] == 'X':
                 mock_board[bottom_left_coord[1]][bottom_left_coord[0]] = None
-            if mock_board[bottom_right_coord[1]][bottom_right_coord[0]] == 'X':
+            if valid_coord(bottom_right_coord) and mock_board[bottom_right_coord[1]][bottom_right_coord[0]] == 'X':
                 mock_board[bottom_right_coord[1]][bottom_right_coord[0]] = None
 
         return False
@@ -252,7 +262,7 @@ class Game:
         child_game_instances = []
         for each_valid_move in all_valid_potential_moves:
             child_game_instances.append(
-                Game(self.board, self.player_1, self.player_2)
+                Game(self.board, Player(self.player_1), Player(self.player_2))
                 .simulate_move(
                     each_valid_move[0],
                     each_valid_move[1],
@@ -265,7 +275,9 @@ class Game:
             monte_carlo_tree.root.add_child(GameTreeNode(each_simulated_game))
         for each_simulated_game_child in monte_carlo_tree.root.children:
             # randomly play-out each node
+            print('playing out')
             winning_team: Team = each_simulated_game_child.value.playout_game()
+            print('Winner {}'.format('WHITE' if winning_team == Team.WHITE else 'BLACK'))
             if winning_team == Team.WHITE:
                 # increment the denominator
                 monte_carlo_tree.root.denominator += 1

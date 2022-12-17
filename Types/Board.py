@@ -22,7 +22,7 @@ class Board:
         """
         self.width: int = width
         self.height: int = height
-        self.board = []
+        self.board: List[List[ChessPiece | None]] = []
         row = []
         for i in range(height):
             for j in range(width):
@@ -65,7 +65,7 @@ class Board:
         self.board[y][x] = chess_piece
         return self
 
-    def remove_piece(self: Board, x: int, y: int) -> ChessPiece:
+    def remove_piece(self: Board, x: int, y: int) -> ChessPiece | None:
         """
         Removes a piece on the chess board, used for removing pieces from the board in the event they are either
         captured, or moving.
@@ -145,10 +145,25 @@ class Board:
         :param moving_team: The team that is requesting the move
         :return: The capture piece
         """
-        captured_piece: ChessPiece = self.remove_piece(to_x, to_y)
+        captured_piece: ChessPiece | None = self.remove_piece(to_x, to_y)
         moving_player: Player = self.player_one if self.player_two.team == moving_team else self.player_two
         moving_player.captured_pieces.append(captured_piece)
         return captured_piece
+
+    def print_board(self: Board) -> None:
+        """
+        Prints the board for debugging or visual purposes
+
+        :return: None, just prints the board
+        """
+        for i in range(self.height):
+            row = []
+            for j in range(self.width):
+                if self.board[i][j] is None:
+                    row.append('_')
+                else:
+                    row.append(self.board[i][j].name)
+            print(row)
 
     def move_piece(self: Board, from_x: int, from_y: int, to_x: int, to_y: int, moving_team: Team) -> Board:
         """

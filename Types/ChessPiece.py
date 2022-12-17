@@ -48,6 +48,8 @@ class ChessPiece:
         Generates all potential moves from a given chess piece, analyzing its move-set and returning all
         possible coordinates it can move to
 
+        MAJOR TODO: MAKE SURE THE PIECE CANNOT JUMP OVER PIECES, HAPPENED WITH THE QUEEN JUMPING OVER PAWNS
+
         :return: All the possible moves the chess piece can make
         """
         #  check if move is infinite, if so, we generate a large amount of them
