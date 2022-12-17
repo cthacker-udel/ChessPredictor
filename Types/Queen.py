@@ -1,8 +1,11 @@
 from __future__ import annotations
-from MoveSet import MoveSet
-from MoveSet import InfiniteDirection
-from ChessPiece import ChessPiece
-from Player import Team
+from typing import TYPE_CHECKING
+from Types.MoveSet import MoveSet
+from Types.MoveSet import InfiniteDirection
+from Types.ChessPiece import ChessPiece
+
+if TYPE_CHECKING:
+    from Types.Player import Team
 
 
 class Queen(ChessPiece):

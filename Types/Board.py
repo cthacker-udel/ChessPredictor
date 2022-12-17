@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
-from ChessPiece import ChessPiece
+if TYPE_CHECKING:
+    from Types.ChessPiece import ChessPiece
 
-from Player import Player, Team
+    from Types.Player import Player, Team
 
 
 class Board:
@@ -21,7 +22,13 @@ class Board:
         """
         self.width: int = width
         self.height: int = height
-        self.board: List[List[ChessPiece | None]] = [[None] * height]
+        self.board = []
+        row = []
+        for i in range(height):
+            for j in range(width):
+                row.append(None)
+            self.board.append(row)
+            row = []
         self.player_one: Optional[Player] = None
         self.player_two: Optional[Player] = None
 
@@ -68,7 +75,7 @@ class Board:
         :return: The removed chess piece
         """
         removed_piece = self.board[y][x]
-        del self.board[y][x]
+        self.board[y][x] = None
         return removed_piece
 
     def clear(self: Board) -> Board:
@@ -138,8 +145,8 @@ class Board:
         :param moving_team: The team that is requesting the move
         :return: The capture piece
         """
-        captured_piece = self.remove_piece(to_x, to_y)
-        moving_player = self.player_one if self.player_two.team == moving_team else self.player_two
+        captured_piece: ChessPiece = self.remove_piece(to_x, to_y)
+        moving_player: Player = self.player_one if self.player_two.team == moving_team else self.player_two
         moving_player.captured_pieces.append(captured_piece)
         return captured_piece
 
@@ -159,4 +166,17 @@ class Board:
                 self.capture_piece(to_x, to_y, moving_team)
             removed_piece = self.remove_piece(from_x, from_y)
             self.place_piece(removed_piece, to_x, to_y)
+        return self
+
+    def set_board(self: Board, player_1: Player, player_2: Player) -> Board:
+        """
+        Initializes the board, aka "setting" the board, given both players, sets their pieces in their respective spots
+
+        :param player_1: Player 1
+        :param player_2: Player 2
+        :return: The Board instance
+        """
+        for piece_1, piece_2 in zip(player_1.pieces, player_2.pieces):
+            self.board[piece_1.y][piece_1.x] = piece_1
+            self.board[piece_2.y][piece_2.x] = piece_2
         return self

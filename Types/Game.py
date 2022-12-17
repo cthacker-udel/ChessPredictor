@@ -1,37 +1,18 @@
 from __future__ import annotations
 
 import random
-from typing import List
+from typing import List, TYPE_CHECKING
+from Types.ChessPieceGenerator import ChessPieceGenerator
+from Types.Helpers import flip_coin, CoinFace
+from Types.Player import Team
+from Types.GameTree import GameTree
+from Types.GameTreeNode import GameTreeNode
 
-from Board import Board
-from Player import Player, Team
-from ChessPieceGenerator import ChessPieceGenerator
-from Helpers import flip_coin, CoinFace
-from GameTree import GameTree
-from GameTreeNode import GameTreeNode
-from King import King
-from ChessPiece import ChessPiece
-
-
-def is_in_kings_space(king: King, piece: ChessPiece) -> List[bool, List[int]]:
-    """
-    Checks if the piece supplied to the function is occupying any space the king can potentially move to
-
-    :param king: The king instance
-    :param piece: The piece to move
-    :return: Whether the piece passed in occupies any of the king's potential moving spaces
-    """
-    is_left = piece.x == king.x - 1
-    is_right = piece.x == king.x + 1
-    is_top = piece.y == king.y - 1
-    is_bottom = piece.y == king.y + 1
-    is_top_left = piece.x == king.x - 1 and piece.y == king.y - 1
-    is_top_right = piece.x == king.x + 1 and piece.y == king.y - 1
-    is_bottom_left = piece.x == king.x - 1 and piece.y == king.y + 1
-    is_bottom_right = piece.x == king.x + 1 and piece.y == king.y + 1
-    if is_left or is_right or is_top or is_bottom or is_top_left or is_top_right or is_bottom_left or is_bottom_right:
-        return [True, [piece.x, piece.y]]
-    return [False, []]
+if TYPE_CHECKING:
+    from Types.Board import Board
+    from Types.Player import Player
+    from Types.King import King
+    from Types.ChessPiece import ChessPiece
 
 
 class Game:
@@ -48,12 +29,16 @@ class Game:
         :param player_2: The Player instance, player 2
         """
         self.board: Board = board
+        self.board.player_one = player_1
+        self.board.player_two = player_2
+
         self.player_1: Player = player_1
         self.player_2: Player = player_2
         team_1_generator = ChessPieceGenerator(self.player_1.team)
         team_2_generator = ChessPieceGenerator(self.player_2.team)
         self.player_1.pieces = team_1_generator.generate_initial_pieces()
         self.player_2.pieces = team_2_generator.generate_initial_pieces()
+        self.board.set_board(self.board.player_one, self.board.player_two)
         self.turn: Team | None = Team.BLACK if flip_coin() == CoinFace.HEADS else Team.WHITE
 
     def end_game(self: Game) -> None:
@@ -70,7 +55,7 @@ class Game:
         self.turn = Team.BLACK if self.turn == Team.WHITE else Team.WHITE
         return self
 
-    def simulate_move(self: Game, from_x: int, from_y: int, to_x: int, to_y: int) -> Game:
+    def simulate_move(self: Game, from_x: int, from_y: int, to_x: int, to_y: int, team: Team) -> Game:
         """
         Simulate a move from the player currently in session, assume the move is valid. Used for the MCTS
 
@@ -78,15 +63,16 @@ class Game:
         :param from_y: The y coordinate the piece is being moved from
         :param to_x: The x coordinate to move to
         :param to_y: The y coordinate to move to
+        :param team: The team executing the move
         :return: The modified instance
         """
         if self.board.is_capture(to_x, to_y, self.turn):
             #  is a capture move, then capture
-            self.board.capture_piece(to_x, to_y)
-            self.board.move_piece(from_x, from_y, to_x, to_y)
+            self.board.capture_piece(to_x, to_y, team)
+            self.board.move_piece(from_x, from_y, to_x, to_y, team)
         else:
             #  not a capture, just move the piece
-            self.board.move_piece(from_x, from_y, to_x, to_y)
+            self.board.move_piece(from_x, from_y, to_x, to_y, team)
         self.next_turn()
         return self
 
@@ -109,10 +95,32 @@ class Game:
                     else []
                     for each_move in each_piece.generate_potential_moves()
                 ])
+            all_valid_potential_moves = list(filter(lambda x: len(x) > 0, all_valid_potential_moves))
             random_move_choice = random.choice(all_valid_potential_moves)
-            self.simulate_move(random_move_choice[0], random_move_choice[1], random_move_choice[2], random_move_choice[3])
+            self.simulate_move(random_move_choice[0], random_move_choice[1], random_move_choice[2],
+                               random_move_choice[3], current_player.team)
             self.next_turn()
         return current_player.team
+
+    def is_in_kings_space(self: Game, king: King, piece: ChessPiece) -> List[bool, List[int]]:
+        """
+        Checks if the piece supplied to the function is occupying any space the king can potentially move to
+
+        :param king: The king instance
+        :param piece: The piece to move
+        :return: Whether the piece passed in occupies any of the king's potential moving spaces
+        """
+        is_left = piece.x == king.x - 1
+        is_right = piece.x == king.x + 1
+        is_top = piece.y == king.y - 1
+        is_bottom = piece.y == king.y + 1
+        is_top_left = piece.x == king.x - 1 and piece.y == king.y - 1
+        is_top_right = piece.x == king.x + 1 and piece.y == king.y - 1
+        is_bottom_left = piece.x == king.x - 1 and piece.y == king.y + 1
+        is_bottom_right = piece.x == king.x + 1 and piece.y == king.y + 1
+        if is_left or is_right or is_top or is_bottom or is_top_left or is_top_right or is_bottom_left or is_bottom_right:
+            return [True, [piece.x, piece.y]]
+        return [False, []]
 
     def is_checkmate(self: Game) -> bool:  # O(N) + O(MK + MJ) --> O(N + MK + MJ)
         """
@@ -149,13 +157,19 @@ class Game:
                 break
         # found the king, now we map out all potential moves from the player, marking their movements on a board
         # if the king is surrounded, then the player has checkmate.
-        mock_board: List[List[ChessPiece | str | None]] = [
-            [None if i != found_king.y and j != found_king.x else found_king for i in range(self.board.width) for j in
-             range(self.board.height)]]
+        mock_board = []
+        for i in range(self.board.height):
+            row = []
+            for j in range(self.board.width):
+                if self.board.board[i][j] == found_king:
+                    row.append(found_king)
+                else:
+                    row.append(None)
+            mock_board.append(row)
         # check if any pieces surround the king, then mark that as X
         for each_piece in opposing_player.pieces:  # O(m)
             if found_king is not None:
-                is_in_king_space: List[bool, List[int]] = is_in_kings_space(found_king, each_piece)
+                is_in_king_space: List[bool, List[int]] = self.is_in_kings_space(found_king, each_piece)
                 if is_in_king_space[0]:
                     mock_board[is_in_king_space[1][1]][is_in_king_space[1][0]] = 'O'
         #  analyze all pieces movements, marking all areas they can strike with an 'X'
@@ -225,34 +239,42 @@ class Game:
         game_clone = self
         monte_carlo_tree = GameTree().set_root(GameTreeNode(game_clone))
         #  process whose turn it is, and then make a random guess for the move to make
-        if game_clone.turn == Team.White:
-            current_player = game_clone.player_1 if game_clone.player_1.team == Team.WHITE else game_clone.player_2
-            all_valid_potential_moves: List[List[int]] = []
-            for each_piece in current_player.pieces:
-                all_valid_potential_moves.extend([
-                    [each_piece.x, each_piece.y] + each_move
-                    if self.board.validate_move(each_move[0], each_move[1], current_player.team)
-                    else []
-                    for each_move in each_piece.generate_potential_moves()
-                ])
-            child_game_instances = []
-            for each_valid_move in all_valid_potential_moves:
-                child_game_instances.append(
-                    Game(self.board, self.player_1, self.player_2)
-                    .simulate_move(
-                        each_valid_move[0],
-                        each_valid_move[1],
-                        each_valid_move[2],
-                        each_valid_move[3]
-                    )
+        current_player = game_clone.player_1 if game_clone.player_1.team == Team.WHITE else game_clone.player_2
+        all_valid_potential_moves: List[List[int]] = []
+        for each_piece in current_player.pieces:
+            all_valid_potential_moves.extend([
+                [each_piece.x, each_piece.y] + each_move
+                if self.board.validate_move(each_move[0], each_move[1], current_player.team)
+                else []
+                for each_move in each_piece.generate_potential_moves()
+            ])
+        all_valid_potential_moves = list(filter(lambda x: len(x) > 0, all_valid_potential_moves))
+        child_game_instances = []
+        for each_valid_move in all_valid_potential_moves:
+            child_game_instances.append(
+                Game(self.board, self.player_1, self.player_2)
+                .simulate_move(
+                    each_valid_move[0],
+                    each_valid_move[1],
+                    each_valid_move[2],
+                    each_valid_move[3],
+                    current_player.team
                 )
-            for each_simulated_game in child_game_instances:
-                monte_carlo_tree.root.add_child(GameTreeNode(each_simulated_game))
-            for each_simulated_game_child in monte_carlo_tree.root.children:
-                # randomly play-out each node
-                winning_team: Team = each_simulated_game_child.value.playout_game()
-                if winning_team == Team.WHITE:
-                    # increment the denominator
-                    monte_carlo_tree.root.denominator += 1
-                else:
-                    monte_carlo_tree.root.numerator += 1
+            )
+        for each_simulated_game in child_game_instances:
+            monte_carlo_tree.root.add_child(GameTreeNode(each_simulated_game))
+        for each_simulated_game_child in monte_carlo_tree.root.children:
+            # randomly play-out each node
+            winning_team: Team = each_simulated_game_child.value.playout_game()
+            if winning_team == Team.WHITE:
+                # increment the denominator
+                monte_carlo_tree.root.denominator += 1
+            else:
+                monte_carlo_tree.root.numerator += 1
+        max_denominator = 0
+        max_node = None
+        for each_node in monte_carlo_tree.root.children:
+            if each_node.denominator > max_denominator:
+                max_node = each_node
+                max_denominator = each_node.denominator
+        return max_node.value

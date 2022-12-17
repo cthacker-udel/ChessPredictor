@@ -1,12 +1,16 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from Types.Board import Board
+from Types.Player import Player, Team
+from Types.Game import Game
 
 
 def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    board: Board = Board()
+    player_1 = Player()
+    player_1.team = Team.WHITE
+    player_2 = Player()
+    player_2.team = Team.BLACK
+    game: Game = Game(board, player_1, player_2)
+    result_game = game.monte_carlo()
 
 
 # Press the green button in the gutter to run the script.

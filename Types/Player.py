@@ -1,7 +1,9 @@
 from __future__ import annotations
 from enum import Enum
-from ChessPiece import ChessPiece
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from Types.ChessPiece import ChessPiece
 
 
 class Team(Enum):

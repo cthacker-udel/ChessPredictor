@@ -1,13 +1,15 @@
 from __future__ import annotations
-from Player import Team
-from ChessPiece import ChessPiece
-from typing import List
-from King import King
-from Bishop import Bishop
-from Knight import Knight
-from Pawn import Pawn
-from Queen import Queen
-from Rook import Rook
+from typing import TYPE_CHECKING, List
+from Types.Bishop import Bishop
+from Types.King import King
+from Types.Knight import Knight
+from Types.Pawn import Pawn
+from Types.Queen import Queen
+from Types.Rook import Rook
+from Types.Player import Team
+
+if TYPE_CHECKING:
+    from Types.ChessPiece import ChessPiece
 
 
 class ChessPieceGenerator:

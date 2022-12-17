@@ -1,8 +1,11 @@
 from __future__ import annotations
-from ChessPiece import ChessPiece
-from MoveSet import MoveSet
-from MoveSet import InfiniteDirection
-from Player import Team
+from typing import TYPE_CHECKING
+from Types.ChessPiece import ChessPiece
+from Types.MoveSet import InfiniteDirection
+from Types.MoveSet import MoveSet
+
+if TYPE_CHECKING:
+    from Types.Player import Team
 
 
 class Bishop(ChessPiece):

@@ -1,9 +1,8 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
-from typing import List
-
-from GameTreeNode import GameTreeNode
-from Game import Game
+if TYPE_CHECKING:
+    from Types.GameTreeNode import GameTreeNode
 
 
 class GameTree:

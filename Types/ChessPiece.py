@@ -1,7 +1,9 @@
 from __future__ import annotations
-from typing import List, Optional
-from MoveSet import MoveSet
-from Player import Team
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from Types.MoveSet import MoveSet
+    from Types.Player import Team
 
 
 class ChessPiece:
@@ -49,7 +51,7 @@ class ChessPiece:
         :return: All the possible moves the chess piece can make
         """
         #  check if move is infinite, if so, we generate a large amount of them
-        infinite_moves = [x for x in filter(lambda move: move.infinite is not None, self.move_set)]
+        infinite_moves = [x for x in filter(lambda move: move.infinite_direction is not None, self.move_set)]
         potential_moves = []
         if len(infinite_moves) > 0:
             #  we have infinite moves, time to generate tons of potential moves we can make!
@@ -110,5 +112,6 @@ class ChessPiece:
                 modified_x = self.x + each_move.x
                 modified_y = self.y + each_move.y
                 potential_moves.append([modified_x, modified_y])
+            potential_moves = list(filter(lambda x: (x[0] < 8 and x[1] < 8) and (x[0] >= 0 and x[1] >= 0), potential_moves))
             return potential_moves
 

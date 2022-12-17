@@ -1,8 +1,10 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
+from Types.MoveSet import MoveSet
+from Types.ChessPiece import ChessPiece
 
-from MoveSet import MoveSet
-from ChessPiece import ChessPiece
-from Player import Team
+if TYPE_CHECKING:
+    from Types.Player import Team
 
 
 class Knight(ChessPiece):
