@@ -66,12 +66,16 @@ class ChessPiece:
                     x_moving_left = self.x - 1
                     while x_moving_left >= 0:
                         if board.grab_piece(x_moving_left, self.y) is not None:
+                            if board.grab_piece(x_moving_left, self.y).team != self.team:
+                                potential_moves.append([x_moving_left, self.y])
                             break
                         potential_moves.append([x_moving_left, self.y])
                         x_moving_left -= 1
                     x_moving_right = self.x + 1
                     while x_moving_right < 8:
                         if board.grab_piece(x_moving_right, self.y) is not None:
+                            if board.grab_piece(x_moving_right, self.y).team != self.team:
+                                potential_moves.append([x_moving_right, self.y])
                             break
                         potential_moves.append([x_moving_right, self.y])
                         x_moving_right += 1
@@ -80,12 +84,16 @@ class ChessPiece:
                     y_moving_up = self.y - 1
                     while y_moving_up >= 0:
                         if board.grab_piece(self.x, y_moving_up) is not None:
+                            if board.grab_piece(self.x, y_moving_up).team != self.team:
+                                potential_moves.append([self.x, y_moving_up])
                             break
                         potential_moves.append([self.x,  y_moving_up])
                         y_moving_up -= 1
                     y_moving_down = self.y + 1
                     while y_moving_down < 8:
-                        if board.grab_piece(self.x, y_moving_up) is not None:
+                        if board.grab_piece(self.x, y_moving_down) is not None:
+                            if board.grab_piece(self.x, y_moving_down).team != self.team:
+                                potential_moves.append([self.x, y_moving_down])
                             break
                         potential_moves.append([self.x, y_moving_down])
                         y_moving_down += 1
@@ -95,6 +103,8 @@ class ChessPiece:
                     diag_up_right_y = self.y - 1
                     while diag_up_right_y >= 0 and diag_up_right_x < 8:
                         if board.grab_piece(diag_up_right_x, diag_up_right_y) is not None:
+                            if board.grab_piece(diag_up_right_x, diag_up_right_y).team != self.team:
+                                potential_moves.append([diag_up_right_x, diag_up_right_y])
                             break
                         potential_moves.append([diag_up_right_x, diag_up_right_y])
                         diag_up_right_x += 1
@@ -104,6 +114,8 @@ class ChessPiece:
                     diag_up_left_y = self.y - 1
                     while diag_up_left_x >= 0 and diag_up_left_y >= 0:
                         if board.grab_piece(diag_up_left_x, diag_up_left_y) is not None:
+                            if board.grab_piece(diag_up_left_x, diag_up_left_y).team != self.team:
+                                potential_moves.append([diag_up_left_x, diag_up_left_y])
                             break
                         potential_moves.append([diag_up_left_x, diag_up_left_y])
                         diag_up_left_x -= 1
@@ -113,6 +125,8 @@ class ChessPiece:
                     diag_down_left_y = self.y + 1
                     while diag_down_left_x >= 0 and diag_down_left_y < 8:
                         if board.grab_piece(diag_down_left_x, diag_down_left_y) is not None:
+                            if board.grab_piece(diag_down_left_x, diag_down_left_y).team != self.team:
+                                potential_moves.append([diag_down_left_x, diag_down_left_y])
                             break
                         potential_moves.append([diag_down_left_x, diag_down_left_y])
                         diag_down_left_x -= 1
@@ -122,6 +136,8 @@ class ChessPiece:
                     diag_down_right_y = self.y + 1
                     while diag_down_right_x < 8 and diag_down_right_y < 8:
                         if board.grab_piece(diag_down_right_x, diag_down_right_y) is not None:
+                            if board.grab_piece(diag_down_right_x, diag_down_right_y).team != self.team:
+                                potential_moves.append([diag_down_right_x, diag_down_right_y])
                             break
                         potential_moves.append([diag_down_right_x, diag_down_right_y])
                         diag_down_right_x += 1

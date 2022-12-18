@@ -22,7 +22,7 @@ class Game:
     Game instance, represents a chess game being played
     """
 
-    def __init__(self: Game, board: Board, player_1: Player, player_2: Player) -> None:
+    def __init__(self: Game, board: Board, player_1: Player, player_2: Player, turn: Team = None) -> None:
         """
         Initializes a Game instance, which takes in a board, and 2 players, and sets the proper fields to prepare for the game
 
@@ -31,17 +31,40 @@ class Game:
         :param player_2: The Player instance, player 2
         """
         self.board: Board = deepcopy(board)
-        self.board.player_one = player_1
-        self.board.player_two = player_2
 
-        self.player_1: Player = player_1
-        self.player_2: Player = player_2
-        team_1_generator = ChessPieceGenerator(self.player_1.team)
-        team_2_generator = ChessPieceGenerator(self.player_2.team)
-        self.player_1.pieces = team_1_generator.generate_initial_pieces()
-        self.player_2.pieces = team_2_generator.generate_initial_pieces()
-        self.board.set_board(self.board.player_one, self.board.player_two)
-        self.turn: Team | None = Team.BLACK if flip_coin() == CoinFace.HEADS else Team.WHITE
+        if not turn:
+            self.board.player_one = deepcopy(player_1)
+            self.board.player_two = deepcopy(player_2)
+
+            self.player_1: Player = self.board.player_one
+            self.player_2: Player = self.board.player_two
+            team_1_generator = ChessPieceGenerator(self.player_1.team)
+            team_2_generator = ChessPieceGenerator(self.player_2.team)
+            self.player_1.pieces = team_1_generator.generate_initial_pieces()
+            self.player_2.pieces = team_2_generator.generate_initial_pieces()
+            self.board.player_one = self.player_1
+            self.board.player_two = self.player_2
+            self.board.set_board(self.board.player_one, self.board.player_two)
+            self.turn: Team | None = Team.BLACK if flip_coin() == CoinFace.HEADS else Team.WHITE
+        else:
+            self.turn = turn
+            self.board.player_one = deepcopy(player_1)
+            self.board.player_two = deepcopy(player_2)
+            self.player_1 = self.board.player_one
+            self.player_2 = self.board.player_two
+
+            self.board.player_one.pieces = []
+            self.board.player_two.pieces = []
+            self.player_1.pieces = []
+            self.player_2.pieces = []
+            for i in range(self.board.height):
+                for j in range(self.board.width):
+                    if self.board.board[i][j] is not None and self.board.board[i][j].team == self.board.player_one.team:
+                        self.player_1.pieces.append(self.board.board[i][j])
+                    elif self.board.board[i][j] is not None and self.board.board[i][j].team == self.board.player_two.team:
+                        self.player_2.pieces.append(self.board.board[i][j])
+            self.board.player_one.pieces = self.player_1.pieces[:]
+            self.board.player_two.pieces = self.player_2.pieces[:]
 
     def end_game(self: Game) -> None:
         """
@@ -95,6 +118,16 @@ class Game:
             all_valid_potential_moves = list(filter(lambda x: len(x) > 0, all_valid_potential_moves))
             all_valid_capture_moves = list(filter(lambda x: self.board.is_capture(x[2], x[3], current_player.team), all_valid_potential_moves))
             random_move_choice: List[int] | None = None
+            #  print("# potential {}  |  # of capture {}".format(len(all_valid_potential_moves), len(all_valid_capture_moves)))
+            if len(all_valid_potential_moves) == 0 and len(all_valid_capture_moves) == 0:
+                self.board.print_board()
+                for each_piece in current_player.pieces:
+                    all_valid_potential_moves.extend([
+                        [each_piece.x, each_piece.y] + each_move
+                        if self.board.validate_move(each_move[0], each_move[1], current_player.team)
+                        else []
+                        for each_move in each_piece.generate_potential_moves(self.board)
+                    ])
             if len(all_valid_capture_moves) > 0:
                 random_move_choice = random.choice(all_valid_capture_moves)
             else:
@@ -252,8 +285,23 @@ class Game:
 
         return False
 
-    def monte_carlo(self: Game) -> Game:
-        game_clone = self
+    def monte_carlo(self: Game, game: Game | None = None, depth: int = 0) -> Game | GameTreeNode:
+        if game is not None:
+            if game.is_checkmate():
+                node = GameTreeNode(game)
+                node.denominator = 0 if game.turn == Team.WHITE else 1
+                node.numerator = 0 if game.turn == Team.BLACK else 1
+                return node
+            game_clone = game
+        else:
+            game_clone = self
+
+        if depth == 10:
+            play_out_result = game.playout_game()
+            node = GameTreeNode(game)
+            node.numerator = 0 if play_out_result == Team.BLACK else 1
+            node.denominator = 0 if play_out_result == Team.WHITE else 1
+            return node
         monte_carlo_tree = GameTree().set_root(GameTreeNode(game_clone))
         #  process whose turn it is, and then make a random guess for the move to make
         current_player = game_clone.player_1 if game_clone.player_1.team == Team.WHITE else game_clone.player_2
@@ -261,15 +309,15 @@ class Game:
         for each_piece in current_player.pieces:
             all_valid_potential_moves.extend([
                 [each_piece.x, each_piece.y] + each_move
-                if self.board.validate_move(each_move[0], each_move[1], current_player.team)
+                if game_clone.board.validate_move(each_move[0], each_move[1], current_player.team)
                 else []
-                for each_move in each_piece.generate_potential_moves(self.board)
+                for each_move in each_piece.generate_potential_moves(game_clone.board)
             ])
         all_valid_potential_moves = list(filter(lambda x: len(x) > 0, all_valid_potential_moves))
         child_game_instances = []
         for each_valid_move in all_valid_potential_moves:
             child_game_instances.append(
-                Game(self.board, Player(self.player_1), Player(self.player_2))
+                Game(game_clone.board, Player(game_clone.player_1), Player(game_clone.player_2), game_clone.turn)
                 .simulate_move(
                     each_valid_move[0],
                     each_valid_move[1],
@@ -282,18 +330,15 @@ class Game:
             monte_carlo_tree.root.add_child(GameTreeNode(each_simulated_game))
         for each_simulated_game_child in monte_carlo_tree.root.children:
             # randomly play-out each node
-            print('playing out')
-            winning_team: Team = each_simulated_game_child.value.playout_game()
-            print('Winner {}'.format('WHITE' if winning_team == Team.WHITE else 'BLACK'))
-            if winning_team == Team.WHITE:
-                # increment the denominator
-                monte_carlo_tree.root.denominator += 1
-            else:
-                monte_carlo_tree.root.numerator += 1
+            print("simulating")
+            simulation_result = game_clone.monte_carlo(each_simulated_game_child.value, depth + 1)
+            print("simulating done")
+            monte_carlo_tree.root.denominator += simulation_result.denominator
+            monte_carlo_tree.root.numerator += simulation_result.numerator
         max_denominator = 0
         max_node = None
         for each_node in monte_carlo_tree.root.children:
             if each_node.denominator > max_denominator:
                 max_node = each_node
                 max_denominator = each_node.denominator
-        return max_node.value
+        return max_node

@@ -194,11 +194,15 @@ class Board:
         :return: The modified Board
         """
         removed_piece: ChessPiece | None = None
+        moving_player = self.player_one if self.player_one.team == moving_team else self.player_two
         if self.validate_move(to_x, to_y, moving_team):
             if self.is_capture(to_x, to_y, moving_team):
                 self.capture_piece(to_x, to_y, moving_team)
             removed_piece = self.remove_piece(from_x, from_y)
             self.place_piece(removed_piece, to_x, to_y)
+            removed_piece_index = moving_player.pieces.index(removed_piece)
+            moving_player.pieces.remove(removed_piece)
+            moving_player.pieces.insert(removed_piece_index, removed_piece)
         return self
 
     def set_board(self: Board, player_1: Player, player_2: Player) -> Board:
