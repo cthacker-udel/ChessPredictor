@@ -21,7 +21,11 @@ class Queen(ChessPiece):
         :param team: The team the piece belongs to
         """
         super().__init__(x, y,
-                         [MoveSet(0, 0, InfiniteDirection(False, False, True))],
-                         [MoveSet(0, 0, InfiniteDirection(False, False, True))],
+                         [MoveSet(0, 0, InfiniteDirection(False, False, True)),
+                          MoveSet(0, 0, InfiniteDirection(True, False, False)),
+                          MoveSet(0, 0, InfiniteDirection(False, True, False))],
+                         [MoveSet(0, 0, InfiniteDirection(False, False, True)),
+                          MoveSet(0, 0, InfiniteDirection(True, False, False)),
+                          MoveSet(0, 0, InfiniteDirection(False, True, False))],
                          team)
         self.name = "Queen"

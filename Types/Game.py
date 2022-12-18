@@ -8,6 +8,7 @@ from Types.Helpers import flip_coin, CoinFace
 from Types.Player import Team, Player
 from Types.GameTree import GameTree
 from Types.GameTreeNode import GameTreeNode
+import time
 
 if TYPE_CHECKING:
     from Types.Board import Board
@@ -67,13 +68,7 @@ class Game:
         :param team: The team executing the move
         :return: The modified instance
         """
-        if self.board.is_capture(to_x, to_y, self.turn):
-            #  is a capture move, then capture
-            self.board.capture_piece(to_x, to_y, team)
-            self.board.move_piece(from_x, from_y, to_x, to_y, team)
-        else:
-            #  not a capture, just move the piece
-            self.board.move_piece(from_x, from_y, to_x, to_y, team)
+        self.board.move_piece(from_x, from_y, to_x, to_y, team)
         self.next_turn()
         return self
 
@@ -85,21 +80,31 @@ class Game:
         """
         # we check if either player is in checkmate, if not, we make a random move from the list of available moves
         # the player can make
-        current_player = None
+        current_player: Player | None = None
+        total_moves: int = 0
         while not self.is_checkmate():
-            current_player = self.player_1 if self.turn == Team.WHITE and self.player_1.team == Team.WHITE else self.player_2
+            current_player: Player = self.player_1 if self.turn == Team.WHITE and self.player_1.team == Team.WHITE else self.player_2
             all_valid_potential_moves: List[List[int]] = []
             for each_piece in current_player.pieces:
                 all_valid_potential_moves.extend([
                     [each_piece.x, each_piece.y] + each_move
                     if self.board.validate_move(each_move[0], each_move[1], current_player.team)
                     else []
-                    for each_move in each_piece.generate_potential_moves()
+                    for each_move in each_piece.generate_potential_moves(self.board)
                 ])
             all_valid_potential_moves = list(filter(lambda x: len(x) > 0, all_valid_potential_moves))
-            random_move_choice = random.choice(all_valid_potential_moves)
+            all_valid_capture_moves = list(filter(lambda x: self.board.is_capture(x[2], x[3], current_player.team), all_valid_potential_moves))
+            random_move_choice: List[int] | None = None
+            if len(all_valid_capture_moves) > 0:
+                random_move_choice = random.choice(all_valid_capture_moves)
+            else:
+                random_move_choice = random.choice(all_valid_potential_moves)
+
             self.simulate_move(random_move_choice[0], random_move_choice[1], random_move_choice[2],
                                random_move_choice[3], current_player.team)
+            #  self.board.print_board()
+            total_moves += 1
+            #  print("Total Moves {}".format(total_moves))
         return current_player.team
 
     def is_in_kings_space(self: Game, king: King, piece: ChessPiece) -> List[bool, List[int]]:
@@ -163,7 +168,9 @@ class Game:
             if each_piece.name == "King":
                 #  piece is a king
                 found_king = each_piece
-                break
+
+        if found_king == None:
+            return True
         # found the king, now we map out all potential moves from the player, marking their movements on a board
         # if the king is surrounded, then the player has checkmate.
         mock_board = []
@@ -176,7 +183,7 @@ class Game:
                     row.append(None)
             mock_board.append(row)
         # check if any pieces surround the king, then mark that as X
-        self.board.print_board()
+        #  self.board.print_board()
         for each_piece in opposing_player.pieces:  # O(m)
             if found_king is not None:
                 is_in_king_space: List[bool, List[int]] = self.is_in_kings_space(found_king, each_piece)
@@ -184,7 +191,7 @@ class Game:
                     mock_board[is_in_king_space[1][1]][is_in_king_space[1][0]] = 'O'
         #  analyze all pieces movements, marking all areas they can strike with an 'X'
         for each_piece in opposing_player.pieces:  # O(M*(K + J)) --> O(MK + MJ)
-            all_potential_moves: List[List[int]] = each_piece.generate_potential_moves()  # K potential moves
+            all_potential_moves: List[List[int]] = each_piece.generate_potential_moves(self.board)  # K potential moves
             all_valid_moves: List[List[int]] = []
             for each_potential_move in all_potential_moves:
                 if self.board.validate_move(each_potential_move[0], each_potential_move[1], opposing_player.team):
@@ -256,7 +263,7 @@ class Game:
                 [each_piece.x, each_piece.y] + each_move
                 if self.board.validate_move(each_move[0], each_move[1], current_player.team)
                 else []
-                for each_move in each_piece.generate_potential_moves()
+                for each_move in each_piece.generate_potential_moves(self.board)
             ])
         all_valid_potential_moves = list(filter(lambda x: len(x) > 0, all_valid_potential_moves))
         child_game_instances = []
