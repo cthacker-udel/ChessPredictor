@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from typing import List, Optional, TYPE_CHECKING
+from Types.Player import Team
 
 if TYPE_CHECKING:
     from Types.ChessPiece import ChessPiece
 
-    from Types.Player import Player, Team
+    from Types.Player import Player
 
 
 class Board:
@@ -63,6 +64,8 @@ class Board:
         :return: The board instance after being mutated
         """
         self.board[y][x] = chess_piece
+        chess_piece.x = x
+        chess_piece.y = y
         return self
 
     def remove_piece(self: Board, x: int, y: int) -> ChessPiece | None:
@@ -145,9 +148,15 @@ class Board:
         :param moving_team: The team that is requesting the move
         :return: The capture piece
         """
-        captured_piece: ChessPiece | None = self.remove_piece(to_x, to_y)
-        moving_player: Player = self.player_one if self.player_two.team == moving_team else self.player_two
-        moving_player.captured_pieces.append(captured_piece)
+        captured_piece: ChessPiece | None = self.remove_piece(to_x, to_y)  # The piece that was captured
+        moving_player: Player = self.player_one if self.player_one.team == moving_team else self.player_two  # the
+        # player that is moving their piece
+        victim_player: Player = self.player_one if moving_player != self.player_one else self.player_two  # The player
+        # that is being moved on
+        victim_player.pieces.remove(captured_piece)  # removes the piece from the victim's piece array, because their
+        # piece has been captured
+        moving_player.captured_pieces.append(captured_piece)  # appends the piece to the captured pieces array of the
+        # moving player
         return captured_piece
 
     def print_board(self: Board) -> None:
@@ -156,13 +165,21 @@ class Board:
 
         :return: None, just prints the board
         """
+        print('-------------------------------------------------------------')
+        print(
+            "Player One Pieces : {}  |  Player Two Pieces : {}\n Player One Captured Pieces : {}  |  Player Two "
+            "Captured Pieces : {}".format(
+                len(self.player_one.pieces), len(self.player_two.pieces), len(self.player_one.captured_pieces),
+                len(self.player_two.captured_pieces)))
         for i in range(self.height):
             row = []
             for j in range(self.width):
                 if self.board[i][j] is None:
-                    row.append('_')
+                    row.append('({},{})_'.format(j, i))
                 else:
-                    row.append(self.board[i][j].name)
+                    row.append('({},{}){}{}'.format(self.board[i][j].x, self.board[i][j].y,
+                                                    'W-' if self.board[i][j].team == Team.WHITE else 'B-',
+                                                    self.board[i][j].name))
             print(row)
 
     def move_piece(self: Board, from_x: int, from_y: int, to_x: int, to_y: int, moving_team: Team) -> Board:
@@ -176,11 +193,16 @@ class Board:
         :param to_y: The row where the piece is moving to
         :return: The modified Board
         """
+        removed_piece: ChessPiece | None = None
+        moving_player = self.player_one if self.player_one.team == moving_team else self.player_two
         if self.validate_move(to_x, to_y, moving_team):
             if self.is_capture(to_x, to_y, moving_team):
                 self.capture_piece(to_x, to_y, moving_team)
             removed_piece = self.remove_piece(from_x, from_y)
             self.place_piece(removed_piece, to_x, to_y)
+            removed_piece_index = moving_player.pieces.index(removed_piece)
+            moving_player.pieces.remove(removed_piece)
+            moving_player.pieces.insert(removed_piece_index, removed_piece)
         return self
 
     def set_board(self: Board, player_1: Player, player_2: Player) -> Board:

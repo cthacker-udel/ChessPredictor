@@ -24,10 +24,10 @@ class Player:
         Initializes a player instance, with all fields defaulted
         """
         if player:
-            self.team = player.team
-            self.captured_pieces = player.captured_pieces[:]
-            self.pieces = player.pieces[:]
-            self.name = player.name
+            self.team: Team = player.team
+            self.captured_pieces: List[ChessPiece | None] = player.captured_pieces[:]
+            self.pieces: List[ChessPiece] = player.pieces[:]
+            self.name: Optional[str] = player.name
         else:
             self.team: Team | None = None
             self.captured_pieces: List[ChessPiece] = []
