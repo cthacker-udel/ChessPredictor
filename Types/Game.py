@@ -286,6 +286,21 @@ class Game:
         return False
 
     def monte_carlo(self: Game, game: Game | None = None, depth: int = 0) -> Game | GameTreeNode:
+        """
+        Monte-Carlo Tree Search Algorithm, which constructs child nodes consisting of children of the current game instance
+        and plays out those games and reports the result back to the callee, which then causes all the children nodes
+        to contain values, which the higher the numerator, the more change white has to win with that move of the child
+        node, the higher the denominator, the more change black has to win with that move of the child node. Then,
+        we pick the maximum node among all the child nodes according to our results (If we are playing as white,
+        then we pick the node with the highest numerator,  if we are black, then we pick the result with the highest
+        denominator. The move is then assigned to the callee and we further process the next course of action given
+        that move.
+
+        :param game: The game instance, which is used to spawn the child nodes
+        :param depth: The depth limit, which can be configured dependent on how many moves the user wants to simulate
+        until playout of each child node C commences
+        :return: The most optimal move among all the potential moves the user can make
+        """
         if game is not None:
             if game.is_checkmate():
                 node = GameTreeNode(game)
@@ -296,7 +311,7 @@ class Game:
         else:
             game_clone = self
 
-        if depth == 10:
+        if depth == 1:
             play_out_result = game.playout_game()
             node = GameTreeNode(game)
             node.numerator = 0 if play_out_result == Team.BLACK else 1
@@ -330,9 +345,7 @@ class Game:
             monte_carlo_tree.root.add_child(GameTreeNode(each_simulated_game))
         for each_simulated_game_child in monte_carlo_tree.root.children:
             # randomly play-out each node
-            print("simulating")
             simulation_result = game_clone.monte_carlo(each_simulated_game_child.value, depth + 1)
-            print("simulating done")
             monte_carlo_tree.root.denominator += simulation_result.denominator
             monte_carlo_tree.root.numerator += simulation_result.numerator
         max_denominator = 0

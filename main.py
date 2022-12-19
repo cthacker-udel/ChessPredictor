@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from Types.Board import Board
 from Types.Player import Player, Team
 from Types.Game import Game
@@ -13,11 +15,8 @@ def play_chess():
     result_game: Game | None = game
     while not result_game.is_checkmate():
         result_game = game.monte_carlo().value
-    print("Hello")
+    print('WHITE' if result_game.turn == Team.WHITE else 'BLACK')
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     play_chess()
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
